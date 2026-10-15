@@ -1,15 +1,14 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 
 @dataclass
-class Dessert:
+class GameRawg:
+    id:int
     name: str
-    calories: float
-    fat: float
-    carbs: float
-    protein: float
-    sodium: float
-    calcium: float
-    iron: float
-    selected: bool 
+    released: datetime
+    rating: float
+    platforms: list[str]
+    genres: list[str]
+    #selected: bool 

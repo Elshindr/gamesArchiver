@@ -1,119 +1,126 @@
-import flet as ft, DataColumnSortEvent
+import flet as ft
+from typing import Callable, List
 import flet_datatable2 as fdt
-from models.games import Dessert
-from .services import DessertService
+from models.games import GameRawg
 
 
-def get_data_columns(on_sort:DataColumnSortEvent) -> list[fdt.DataColumn2]:
 
-    return [
-        fdt.DataColumn2(
-            label=ft.Text("Name"),
-            size=fdt.DataColumnSize.L,
-            on_sort=on_sort,
-            heading_row_alignment=ft.MainAxisAlignment.START,
-        ),
-        *[
-            fdt.DataColumn2(label=ft.Text(l), on_sort=on_sort, numeric=True)
-            for l in [
-                "Calories",
-                "Fat",
-                "Carbs",
-                "Protein",
-                "Sodium",
-                "Calcium",
-                "Iron",
-            ]
-        ],
-    ]
+class ViewSearch:
+    COLUMNS = {
+            "Name": "name",
+            "Released": "released",
+            "Rating": "rating",
+            "Platforms": "platforms",
+            "Genres": "genres",
+        }
 
+    @classmethod
+    def get_data_columns(cls, on_sort: Callable[[ft.DataColumnSortEvent], None]) -> list[fdt.DataColumn2]:
+        """Génère les colonnes dans l'ordre exact de COLUMNS, avec gestion du tri."""
+        labels = list(cls.COLUMNS)
+        return [
+            fdt.DataColumn2(
+                label=ft.Text(labels[0]),
+                size=fdt.DataColumnSize.L,
+                on_sort=on_sort,
+                heading_row_alignment=ft.MainAxisAlignment.START,
+            ),
+            *[fdt.DataColumn2(label=ft.Text(c), on_sort=on_sort) for c in labels[1:]],
+        ]
 
-def get_data_rows(desserts: list[Dessert], selected_dessert: Dessert | None, on_select) -> list[fdt.DataRow2]:
-    return [
-        fdt.DataRow2(
-            specific_row_height=50,
-            selected=(d is selected_dessert),
-            on_tap=lambda _, d=d: on_select(d),
-            cells=[ft.DataCell(content=ft.Text(v)) for v in
-                   (d.name, d.calories, d.fat, d.carbs, d.protein, d.sodium, d.calcium, d.iron)],
-        )
-        for d in desserts
-    ]
+    @classmethod
+    def get_data_cells(cls, game: GameRawg) -> list[ft.DataCell]:
+        """Génère les cellules dans l'ordre exact de COLUMNS, avec gestion des None."""
+        cells = []
+        for attr in cls.COLUMNS.values():
+            raw = getattr(game, attr, None)
+            if attr in ("platforms", "genres"):
+                value = ", ".join(raw) if raw else ""
+            else:
+                value = raw
+            cells.append(ft.DataCell(content=ft.Text(value)))
+        return cells
 
-def SearchPage(page: ft.Page):
+    @classmethod
+    def get_data_rows(cls, games, selected_game, on_select) -> list[fdt.DataRow2]:
+        """Retourne les lignes de données pour le tableau de jeux."""
+        return [
+            fdt.DataRow2(
+                specific_row_height=50,
+                selected=(g is selected_game),
+                on_tap=lambda _, g=g: on_select(g),
+                cells=cls.get_data_cells(g),   # même ordre que get_data_columns
+            )
+            for g in games
+        ]
 
-    sort_column_index, sort_ascending = 0, True
-    selected_dessert: Dessert | None = None  
-    desserts = [
-        Dessert("Frozen Yogurt", 159, 6.0, 24, 4.0, 87, 14, 1, True),
-        Dessert("Ice Cream Sandwich", 237, 9.0, 37, 4.3, 129, 8, 1, True),
-        Dessert("Eclair", 262, 16.0, 24, 6.0, 337, 6, 7, True),
-        Dessert("Cupcake", 305, 3.7, 67, 4.3, 413, 3, 8, True),
-        Dessert("Gingerbread", 356, 16.0, 49, 3.9, 327, 7, 16, True),
-        Dessert("Jelly Bean", 375, 0.0, 94, 0.0, 50, 0, 0, True),
-        Dessert("Lollipop", 392, 0.2, 98, 0.0, 38, 0, 2, True),
-        Dessert("Honeycomb", 408, 3.2, 87, 6.5, 562, 0, 45, True),
-        Dessert("Donut", 452, 25.0, 51, 4.9, 326, 2, 22, True),
-        Dessert("Apple Pie", 518, 26.0, 65, 7.0, 54, 12, 6, True),
-        Dessert("Frozen Yougurt with sugar", 168, 6.0, 26, 4.0, 87, 14, 1, True),
-        Dessert("Ice Cream Sandwich with sugar", 246, 9.0, 39, 4.3, 129, 8, 1, True),
-        Dessert("Eclair with sugar", 271, 16.0, 26, 6.0, 337, 6, 7, True),
-        Dessert("Cupcake with sugar", 314, 3.7, 69, 4.3, 413, 3, 8, True),
-        Dessert("Gingerbread with sugar", 345, 16.0, 51, 3.9, 327, 7, 16, True),
-        Dessert("Jelly Bean with sugar", 364, 0.0, 96, 0.0, 50, 0, 0, True),
-        Dessert("Lollipop with sugar", 401, 0.2, 100, 0.0, 38, 0, 2, True),
-        Dessert("Honeycomb with sugar", 417, 3.2, 89, 6.5, 562, 0, 45, True),
-        Dessert("Donut with sugar", 461, 25.0, 53, 4.9, 326, 2, 22, True),
-        Dessert("Apple pie with sugar", 527, 26.0, 67, 7.0, 54, 12, 6, True),
-        Dessert("Frozen yougurt with honey", 223, 6.0, 36, 4.0, 87, 14, 1, True),
-        Dessert("Ice Cream Sandwich with honey", 301, 9.0, 49, 4.3, 129, 8, 1, False),
-        Dessert("Eclair with honey", 326, 16.0, 36, 6.0, 337, 6, 7, False),
-        Dessert("Cupcake with honey", 369, 3.7, 79, 4.3, 413, 3, 8, False),
-        Dessert("Gingerbread with honey", 420, 16.0, 61, 3.9, 327, 7, 16, False),
-        Dessert("Jelly Bean with honey", 439, 0.0, 106, 0.0, 50, 0, 0, False),
-        Dessert("Lollipop with honey", 456, 0.2, 110, 0.0, 38, 0, 2, False),
-        Dessert("Honeycomb with honey", 472, 3.2, 99, 6.5, 562, 0, 45, False),
-        Dessert("Donut with honey", 516, 25.0, 63, 4.9, 326, 2, 22, False),
-        Dessert("Apple pie with honey", 582, 26.0, 77, 7.0, 54, 12, 6, False),
-    ]
-    table = fdt.DataTable2(
-        expand=True,
-        show_checkbox_column=False,
-        column_spacing=0,
-        heading_row_color=ft.Colors.SECONDARY_CONTAINER,
-        horizontal_margin=12,
-        bottom_margin=10,
-        min_width=600,
-    )
-
-    def handle_sort(e: ft.DataColumnSortEvent):
-        nonlocal sort_column_index, sort_ascending
-        sort_column_index, sort_ascending = e.column_index, e.ascending
-        DessertService.sort(desserts, e.column_index, e.ascending)
-        refresh()
-
-    def handle_select(d: Dessert):
-        nonlocal selected_dessert
-        selected_dessert = None if selected_dessert is d else d   # re-clic = désélection
-        refresh()
-
-    def fill():
-        # premier rendu, pas d'update
-        table.columns = get_data_columns(on_sort=handle_sort)
-        table.rows = get_data_rows(desserts, selected_dessert, handle_select)
-        table.sort_column_index = sort_column_index
-        table.sort_ascending = sort_ascending
-        table.empty = ft.Container(
-            content=ft.Text("Effectuez une recherche de jeux", style=ft.TextThemeStyle.TITLE_MEDIUM),
-            alignment=ft.Alignment.CENTER,
+    @staticmethod
+    def get_search_table() -> fdt.DataTable2:
+        """Retourne le composant de tableau de jeux trouvés."""
+        return fdt.DataTable2(
+            expand=True,
+            show_checkbox_column=False,
+            column_spacing=0,
+            heading_row_color=ft.Colors.SECONDARY_CONTAINER,
+            horizontal_margin=12,
+            bottom_margin=10,
+            min_width=600,
+            empty=ft.Container(
+                content=ft.Text("Effectuez une recherche de jeux", theme_style=ft.TextThemeStyle.TITLE_MEDIUM),
+                alignment=ft.Alignment.CENTER,
+            ),
         )
 
-    def refresh():
-        fill()
-        table.update()
+    @staticmethod
+    def get_search_bar(
+        query: str,
+        on_query_change: Callable[[str], None],
+        on_search: Callable[[], object],
+    ) -> ft.Control:
 
+        def handle_input_change(e: ft.ControlEvent):
+            on_query_change(e.control.value or "")
 
-    # Initial fill
-    fill()
-    page.views.append(ft.View(controls=[ft.SafeArea(expand=True, content=table)]))
-    page.update()
+        async def handle_input_submit(e: ft.ControlEvent):
+            await on_search()
+
+        async def handle_button_click(e: ft.ControlEvent):
+            await on_search()
+
+        return ft.Row(
+            controls=[
+                ft.Text("Recherche :", size=16),
+                ft.TextField(
+                    value=query,
+                    hint_text="Nom du jeu …",
+                    expand=True,
+                    on_change=handle_input_change,
+                    on_submit=handle_input_submit,
+                    prefix_icon=ft.Icons.SEARCH,
+                ),
+                ft.FilledButton(
+                    "Rechercher",
+                    icon=ft.Icons.SEARCH,
+                    on_click=handle_button_click,
+                ),
+            ],
+            spacing=10,
+        )
+
+    @staticmethod
+    def build_search_page(table: fdt.DataTable2, search_bar: ft.Control) -> ft.View:
+        """Assemble la vue complète à partir de composants déjà construits."""
+        return ft.View(
+            vertical_alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.SafeArea(
+                    expand=True,
+                    content=ft.Column(
+                        expand=True,
+                        controls=[search_bar, table],
+                        spacing=10,
+                    ),
+                )
+            ],
+        )

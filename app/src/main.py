@@ -1,10 +1,7 @@
 import flet as ft
-import flet_datatable2 as fdt
-from models.games import Dessert
-from front.searchgames.services import DessertService
-from front.searchgames.view import SearchPage
+from front.searchgames.controleur import SearchControl
 
 
 
 
-ft.run(SearchPage)
+ft.run(SearchControl)
