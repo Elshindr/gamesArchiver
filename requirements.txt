@@ -1,0 +1,6 @@
+python-dotenv
+pandas
+requests
+howlongtobeatpy
+flet[all]
+flet-datatable2
