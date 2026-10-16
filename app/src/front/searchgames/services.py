@@ -7,15 +7,23 @@ class GameRawgService:
             g.name.casefold() if g.name else None
         ),
         1: lambda g: g.released or None,
-        2: lambda g: g.rating,
-        3: lambda g: (
+        2: lambda g: (
             ", ".join(g.platforms or []).casefold()
             if g.platforms else None
         ),
-        4: lambda g: (
+        3: lambda g: (
             ", ".join(g.genres or []).casefold()
             if g.genres else None
         ),
+        4: lambda g: (
+            ", ".join(g.parent_platforms or []).casefold()
+            if g.parent_platforms else None
+        ),
+        5: lambda g: (
+            ", ".join(g.tags or []).casefold()
+            if g.tags else None
+        ),
+        6: lambda g: g.playtime if g.playtime is not None else None,
     }
 
     @staticmethod

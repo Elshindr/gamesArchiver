@@ -8,7 +8,12 @@ class GameRawg:
     id:int
     name: str
     released: datetime
-    rating: float
     platforms: list[str]
     genres: list[str]
+    slug: str
+    background_image: str
+    publisher: str
+    developer: str
+    tags: list[str]
+    playtime: int
     #selected: bool 
