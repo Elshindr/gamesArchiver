@@ -16,14 +16,10 @@ class GameRawgService:
             if g.genres else None
         ),
         4: lambda g: (
-            ", ".join(g.parent_platforms or []).casefold()
-            if g.parent_platforms else None
-        ),
-        5: lambda g: (
             ", ".join(g.tags or []).casefold()
             if g.tags else None
         ),
-        6: lambda g: g.playtime if g.playtime is not None else None,
+        5: lambda g: g.playtime if g.playtime is not None else None,
     }
 
     @staticmethod

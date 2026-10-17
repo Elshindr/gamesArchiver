@@ -34,6 +34,8 @@ class ViewSidePanelDetailGame:
                     src=game.background_image or "",
                     width=490,
                     height=490,
+                    fit= ft.BoxFit.FIT_WIDTH,
+                    
                 ),
                 ft.Text(f"ID : {game.id}"),
                 ft.Text(f"Date de sortie : " f"{game.released or 'Non spécifiée'}"),

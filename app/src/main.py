@@ -1,7 +1,14 @@
 import flet as ft
-from front.searchgames.controleur import SearchControl
+from front.searchgames.controler import SearchController
 
 
 
+async def main(page: ft.Page):
 
-ft.run(SearchControl)
+    controller = SearchController(page)
+
+    await controller.initialize()
+    controller.set_page()
+
+
+ft.run(main)

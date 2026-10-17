@@ -2,19 +2,19 @@ import flet as ft
 from typing import Callable, List
 import flet_datatable2 as fdt
 from models.games import GameRawg
-from front.detailpanel import ViewSidePanelDetailGame
+
 
 class ViewSearch:
+
+    #### TABLE
     COLUMNS = {
-            "Name": "name",
-            "Released": "released",
-            "Platforms": "platforms",
-            "Genres": "genres",
-            "Publisher": "publisher",
-            "Developer": "developer",
-            "Tags": "tags",
-            "Playtime (h)": "playtime",
-        }
+        "name": ["Name", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
+        "released": ["Released", fdt.DataColumnSize.S, ft.Alignment.CENTER],
+        "platforms": ["Platforms", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
+        "genres": ["Genres", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
+        "tags": ["Tags", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
+        "playtime": ["Playtime (h)", fdt.DataColumnSize.S, ft.Alignment.CENTER],
+    }
 
 
     @classmethod
@@ -24,25 +24,24 @@ class ViewSearch:
     ) -> list[fdt.DataColumn2]:
         """Génère les colonnes dans l'ordre exact de COLUMNS."""
 
-        labels = list(cls.COLUMNS)
-
         return [
             *[
                 fdt.DataColumn2(
-                    label=ft.Text(label),
+                    label=ft.Text(config[0]),
                     on_sort=on_sort,
-                    heading_row_alignment=ft.MainAxisAlignment.START,
+                    heading_row_alignment=ft.MainAxisAlignment.CENTER,
+                    size=config[1],
                 )
-                for label in labels
+                for col, config in cls.COLUMNS.items()
             ],
-
             # Colonne Actions
             fdt.DataColumn2(
+                heading_row_alignment=ft.MainAxisAlignment.CENTER,
                 label=ft.Text("Actions"),
-                size=fdt.DataColumnSize.L,
+                size=fdt.DataColumnSize.S,
+                col=1,
             ),
         ]
-
 
 
     @classmethod
@@ -51,10 +50,10 @@ class ViewSearch:
         game: GameRawg,
         on_open_panel: Callable[[GameRawg], None],
     ) -> list[ft.DataCell]:
-
+        """Genere les cellules pour chaque colonne et ligne"""
         cells = []
 
-        for attr in cls.COLUMNS.values():
+        for attr in cls.COLUMNS.keys():
 
             raw = getattr(game, attr, None)
 
@@ -65,24 +64,46 @@ class ViewSearch:
 
             cells.append(
                 ft.DataCell(
-                    content=ft.Text(str(value))
+                    content=ft.Container(
+                        content=ft.Text(
+                            value=str(value),
+                            tooltip=str(value),
+                        ),
+                        alignment=cls.COLUMNS.get(attr)[2],
+                        # border=ft.Border(
+                        #    right=ft.BorderSide(
+                        #        width=0.5,
+                        #       color=ft.Colors.OUTLINE_VARIANT,
+                        #   )
+                        # ),
+                        expand=True,
+                    )
                 )
             )
 
-        # UNE SEULE cellule Actions
+        # cellule Actions
         cells.append(
             ft.DataCell(
-                content=ft.IconButton(
-                    icon=ft.Icons.REMOVE_RED_EYE,
-                    tooltip="Voir les détails",
-                    on_click=lambda e, g=game: on_open_panel(g),
+                content=ft.Row(
+                    controls=[
+                        ft.IconButton(
+                            icon=ft.Icons.REMOVE_RED_EYE,
+                            tooltip="Voir les détails",
+                            on_click=lambda e, g=game: on_open_panel(g),
+                        ),
+                        ft.IconButton(
+                            icon=ft.Icons.ADD_CIRCLE,
+                            tooltip="Ajouter à la base de données",
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
                 )
             )
         )
 
         return cells
 
-    
+
     @classmethod
     def get_data_rows(
         cls,
@@ -91,31 +112,24 @@ class ViewSearch:
         on_select,
         on_open_panel,
     ) -> list[fdt.DataRow2]:
-
+        """Genere les lignes pour chaque colonnes et appelle la generation des cellules"""
         rows = []
 
         for i, g in enumerate(games):
 
             base_color = (
-                ft.Colors.SURFACE_CONTAINER_LOW
-                if i % 2 == 0
-                else ft.Colors.SURFACE
+                ft.Colors.SURFACE_CONTAINER_LOW if i % 2 == 0 else ft.Colors.SURFACE
             )
 
             rows.append(
                 fdt.DataRow2(
                     specific_row_height=50,
-
                     selected=(g is selected_game),
-
                     color={
                         ft.ControlState.DEFAULT: base_color,
-                        ft.ControlState.SELECTED: ft.Colors.TEAL,
-                        ft.ControlState.PRESSED: ft.Colors.SECONDARY_CONTAINER,
+                        ft.ControlState.SELECTED: ft.Colors.ON_PRIMARY,
                     },
-
                     on_tap=lambda _, g=g: on_select(g),
-
                     cells=cls.get_data_cells(
                         g,
                         on_open_panel,
@@ -138,21 +152,73 @@ class ViewSearch:
             bottom_margin=10,
             min_width=600,
             empty=ft.Container(
-                content=ft.Text("Effectuez une recherche de jeux", theme_style=ft.TextThemeStyle.TITLE_MEDIUM),
+                content=ft.Text(
+                    "Effectuez une recherche de jeux",
+                    theme_style=ft.TextThemeStyle.TITLE_MEDIUM,
+                ),
                 alignment=ft.Alignment.CENTER,
             ),
         )
 
-
+    #### BAR SEARCH
     @staticmethod
     def get_search_bar(
         query: str,
+        platforms: dict,
+        text_platforms:ft.Text,
         on_query_change: Callable[[str], None],
         on_search: Callable[[], object],
+        on_toggle_platform,
     ):
+
         search_button = ft.FilledButton(
-            "Rechercher",
+            None,
             icon=ft.Icons.SEARCH,
+        )
+
+        menu_items = []
+        for plt, ids in platforms.items():
+            print(plt)
+            print(ids)
+            checkbox = ft.Checkbox(
+                label=plt,
+                value=False,
+                on_change=lambda e, p=plt: on_toggle_platform(p, e.control.value),
+                expand=True,
+
+            )
+
+            menu_items.append(
+                ft.PopupMenuItem(
+                    content=checkbox
+                )
+            )
+        
+        
+        text_platforms.color=ft.Colors.BLUE_GREY_200
+        text_platforms.size=16
+        text_platforms.margin=ft.Margin.only(left=9)
+
+        combo = ft.PopupMenuButton(
+            content=ft.Container(
+                content=ft.Row(
+                    [
+                        ft.Icon(
+                            ft.Icons.VIDEOGAME_ASSET_ROUNDED,
+                            color=ft.Colors.BLUE_GREY_200,
+                        ),
+                        text_platforms,
+                    ],
+                    spacing=5,
+                ),
+                padding=11,
+                border=ft.Border.all(1, ft.Colors.OUTLINE),
+                border_radius=5,
+                expand=True,
+                width=450,
+            ),
+            items=menu_items,
+            width=500,
         )
 
         progress = ft.ProgressRing(
@@ -172,15 +238,15 @@ class ViewSearch:
 
         bar = ft.Row(
             controls=[
-                ft.Text("Recherche :", size=16),
                 ft.TextField(
                     value=query,
                     hint_text="Nom du jeu …",
-                    expand=True,
                     on_change=lambda e: on_query_change(e.control.value or ""),
                     on_submit=handle_input_submit,
-                    prefix_icon=ft.Icons.SEARCH,
+                    prefix_icon=ft.Icons.ABC_ROUNDED,  # ft.Icons.GAMEPAD_ROUNDED,
                 ),
+                combo,
+                #menu_content,
                 search_button,
                 progress,
             ],
@@ -189,14 +255,13 @@ class ViewSearch:
 
         return bar, search_button, progress
 
-
-
+    ### ASSEMBLE
     @staticmethod
     def build_search_page(
-        content: ft.Control,
+        tables: ft.Control,
         search_bar: ft.Control,
     ) -> ft.View:
-
+        """Assemble la vue complète à partir de composants déjà construits."""
         return ft.View(
             vertical_alignment=ft.MainAxisAlignment.START,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -207,23 +272,8 @@ class ViewSearch:
                         expand=True,
                         controls=[
                             search_bar,
-                            content,
+                            tables,
                         ],
-                        spacing=10,
-                    ),
-                )
-            ],
-        )
-        """Assemble la vue complète à partir de composants déjà construits."""
-        return ft.View(
-            vertical_alignment=ft.MainAxisAlignment.START,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.SafeArea(
-                    expand=True,
-                    content=ft.Column(
-                        expand=True,
-                        controls=[search_bar, table],
                         spacing=10,
                     ),
                 )
