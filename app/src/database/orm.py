@@ -14,15 +14,15 @@ class GameStatus(str, Enum):
     ABANDONED = "Platiné"
 
 
-class PlatformsRAWG(Base):
-    __tablename__ = "platforms_rawg"
+class Platform(Base):
+    __tablename__ = "platform"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     idRawg: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
     games: Mapped[list["Game"]] = relationship(
-        secondary="game_platforms", back_populates="platforms_rawg"
+        secondary="game_platforms", back_populates="platforms"
     )
 
 
@@ -40,7 +40,7 @@ class Game(Base):
     release: Mapped[Date | None] = mapped_column(Date, nullable=True)
     imageUrl: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    platforms: Mapped[list["PlatformsRAWG"]] = relationship(
+    platforms: Mapped[list["Platform"]] = relationship(
         secondary="game_platforms", back_populates="games"
     )
 
@@ -58,8 +58,8 @@ class GamePlatform(Base):
         primary_key=True,
     )
 
-    platforms_rawg_id: Mapped[int] = mapped_column(
-        ForeignKey("platforms_rawg.id"),
+    platforms_id: Mapped[int] = mapped_column(
+        ForeignKey("platform.id"),
         primary_key=True,
     )
 
@@ -89,7 +89,4 @@ class Commentary(Base):
         nullable=False,
     )
 
-    gameId: Mapped[int] = mapped_column(
-        ForeignKey("games.id"), unique=True, nullable=False
-    )
     game: Mapped["Game"] = relationship(back_populates="commentary")

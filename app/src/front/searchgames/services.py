@@ -31,7 +31,7 @@ class GameRawgService:
 
         key_func = GameRawgService.SORTERS[column_index]
 
-        # Séparation: valeur existe / valeur absente.
+        # Séparation: valeur existe / valeur None
         with_value = [
             game for game in games
             if key_func(game) is not None
@@ -42,7 +42,7 @@ class GameRawgService:
             if key_func(game) is None
         ]
 
-        # Trier uniquement les valeurs comparables.
+        # Trier uniquement les valeurs comparables
         with_value.sort(
             key=key_func,
             reverse=not ascending,
@@ -55,11 +55,11 @@ class GameRawgService:
 
         return games
 
-    @staticmethod
+    """@staticmethod
     def toggle(game: GameRawg) -> None:
         game.selected = not game.selected
 
     @staticmethod
     def toggle_all(games: list[GameRawg], target: bool) -> None:
         for d in games:
-            d.selected = target
+            d.selected = target"""

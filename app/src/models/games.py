@@ -16,4 +16,4 @@ class GameRawg:
     #developer: str
     tags: list[str]
     playtime: int
-    #selected: bool 
+    inBase: bool = False

@@ -49,6 +49,7 @@ class ViewSearch:
         cls,
         game: GameRawg,
         on_open_panel: Callable[[GameRawg], None],
+        on_add_game: Callable[[GameRawg], None],
     ) -> list[ft.DataCell]:
         """Genere les cellules pour chaque colonne et ligne"""
         cells = []
@@ -81,6 +82,9 @@ class ViewSearch:
                 )
             )
 
+        async def handle_add_game(e: ft.ControlEvent):
+            await on_add_game(game)
+
         # cellule Actions
         cells.append(
             ft.DataCell(
@@ -94,6 +98,7 @@ class ViewSearch:
                         ft.IconButton(
                             icon=ft.Icons.ADD_CIRCLE,
                             tooltip="Ajouter à la base de données",
+                            on_click=handle_add_game,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
@@ -111,6 +116,7 @@ class ViewSearch:
         selected_game,
         on_select,
         on_open_panel,
+        on_add_game
     ) -> list[fdt.DataRow2]:
         """Genere les lignes pour chaque colonnes et appelle la generation des cellules"""
         rows = []
@@ -133,6 +139,7 @@ class ViewSearch:
                     cells=cls.get_data_cells(
                         g,
                         on_open_panel,
+                        on_add_game
                     ),
                 )
             )
@@ -160,6 +167,7 @@ class ViewSearch:
             ),
         )
 
+
     #### BAR SEARCH
     @staticmethod
     def get_search_bar(
@@ -173,7 +181,8 @@ class ViewSearch:
 
         search_button = ft.FilledButton(
             None,
-            icon=ft.Icons.SEARCH
+            icon=ft.Icons.SEARCH,
+             style=ft.ButtonStyle(shape=ft.CircleBorder(), padding=10)
         )
 
         menu_items = []

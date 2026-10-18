@@ -1,12 +1,10 @@
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,Engine
 from pathlib import Path
-#from dotenv import load_dotenv
 import os
 from .orm import Base
 
-#load_dotenv()
-def init_db():
+def init_db()-> Engine:
     storage_dir = os.getenv("FLET_APP_STORAGE_DATA")
 
     if not storage_dir:

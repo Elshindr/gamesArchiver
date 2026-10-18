@@ -5,12 +5,14 @@ from .services import GameRawgService
 from .searchview import ViewSearch
 from .detailpanelview import ViewSidePanelDetailGame
 import asyncio
+from back.ingestion import Ingestion
 
 
 class SearchController:
 
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, engine):
         self.page = page
+        self.engine = engine
 
         # État
         self.query = ""
@@ -63,7 +65,7 @@ class SearchController:
             self.text_platforms,
             on_query_change=self.handle_query_change,
             on_search=self.handle_search,
-            on_toggle_platform=self.toggle_platform
+            on_toggle_platform=self.toggle_platform,
         )
 
         self.table = ViewSearch.get_search_table()
@@ -79,7 +81,6 @@ class SearchController:
         self.fill()
 
         return ViewSearch.build_search_page(tables, search_bar)
-
 
     #### DROPDOWN PLATFORMS
 
@@ -114,7 +115,7 @@ class SearchController:
 
         self.page.update()
 
-    # RECHERCHE GAMES RAWG
+    # RECHERCHE BAR GAMES RAWG
     def handle_query_change(self, new_query: str):
         self.query = new_query
 
@@ -173,15 +174,21 @@ class SearchController:
 
         self.refresh()
 
-
-
     def handle_select(self, g: GameRawg):
         self.selected_game = (
             None if self.selected_game is g else g
         )  # re-clic = désélection
         self.refresh()
 
-
+    ### ACTION BTN
+    async def on_add_game(self, game: GameRawg):
+        isInBase = await asyncio.to_thread(
+        Ingestion.insert_game_rawg,
+        game,
+        self.platforms,
+        self.engine,
+    )
+        self.page.update()
 
     ### GENERALS
     def fill(self):
@@ -195,12 +202,11 @@ class SearchController:
             self.selected_game,
             self.handle_select,
             on_open_panel=self.open_game_panel,
+            on_add_game= self.on_add_game,
         )
 
         self.table.sort_column_index = self.sort_column_index
         self.table.sort_ascending = self.sort_ascending
-
-
 
     def refresh(self):
         self.fill()
