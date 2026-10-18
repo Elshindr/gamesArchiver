@@ -11,6 +11,7 @@ class RAWGAPI:
     api_key = os.getenv("RAWG_API_KEY")
     base_url = "https://api.rawg.io/api"
 
+
     @staticmethod
     def search_raw_get(query, platforms):
         """Lance la requête GET vers l'API RAWG pour rechercher des jeux avec la query donnée et la page spécifiée."""
@@ -113,6 +114,7 @@ class RAWGAPI:
         if raw_data is None:
             return []
         return RAWGAPI.search_transform(raw_data)
+
 
     @staticmethod
     def get_platforms():

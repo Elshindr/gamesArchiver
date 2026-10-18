@@ -1,16 +1,19 @@
 import flet as ft
-from front.searchgames.controler import SearchController
-
+from front.searchgames.searchcontroler import SearchController
+from front.main.maincontroler import MainController
 from database.createdb import init_db
 
 async def main(page: ft.Page):
 
-    # CHECK DB
+    # CHECK/INIT DB
     engine = init_db()
 
-    controller = SearchController(page)
-    await controller.initialize()
-    controller.set_page()
+    # INIT TABS
+    controlermain = MainController(page)
+    await controlermain.set_page()
+    
+
+
 
 
 ft.run(main)

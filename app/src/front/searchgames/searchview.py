@@ -168,24 +168,21 @@ class ViewSearch:
         text_platforms:ft.Text,
         on_query_change: Callable[[str], None],
         on_search: Callable[[], object],
-        on_toggle_platform,
+        on_toggle_platform
     ):
 
         search_button = ft.FilledButton(
             None,
-            icon=ft.Icons.SEARCH,
+            icon=ft.Icons.SEARCH
         )
 
         menu_items = []
         for plt, ids in platforms.items():
-            print(plt)
-            print(ids)
             checkbox = ft.Checkbox(
                 label=plt,
+                expand=True,
                 value=False,
                 on_change=lambda e, p=plt: on_toggle_platform(p, e.control.value),
-                expand=True,
-
             )
 
             menu_items.append(
@@ -215,10 +212,10 @@ class ViewSearch:
                 border=ft.Border.all(1, ft.Colors.OUTLINE),
                 border_radius=5,
                 expand=True,
-                width=450,
+                width=450
             ),
             items=menu_items,
-            width=500,
+            width=500
         )
 
         progress = ft.ProgressRing(
@@ -246,11 +243,10 @@ class ViewSearch:
                     prefix_icon=ft.Icons.ABC_ROUNDED,  # ft.Icons.GAMEPAD_ROUNDED,
                 ),
                 combo,
-                #menu_content,
                 search_button,
-                progress,
+                progress
             ],
-            spacing=10,
+            spacing=10
         )
 
         return bar, search_button, progress
@@ -260,12 +256,10 @@ class ViewSearch:
     def build_search_page(
         tables: ft.Control,
         search_bar: ft.Control,
-    ) -> ft.View:
+    ) -> ft.Container:
         """Assemble la vue complète à partir de composants déjà construits."""
-        return ft.View(
-            vertical_alignment=ft.MainAxisAlignment.START,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
+        return ft.Container(
+            content=
                 ft.SafeArea(
                     expand=True,
                     content=ft.Column(
@@ -277,5 +271,5 @@ class ViewSearch:
                         spacing=10,
                     ),
                 )
-            ],
+            ,
         )
