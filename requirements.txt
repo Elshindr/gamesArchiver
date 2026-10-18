@@ -4,3 +4,4 @@ requests
 howlongtobeatpy
 flet[all]
 flet-datatable2
+sqlalchemy
