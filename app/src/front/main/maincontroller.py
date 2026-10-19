@@ -17,13 +17,17 @@ class MainController:
 
     async def set_page(self):
         # SEARCH
-        controllersearch = SearchController(self.page, self.engine)
+        controllercomms = CommsController(self.page, self.engine)
+        controllersearch = SearchController(
+            self.page,
+            self.engine,
+            on_game_added=controllercomms.refresh,
+        )
         await controllersearch.initialize()
         tabsearch = controllersearch.set_page()
 
         # COMMS
-        controllercomms = CommsController(self.page, self.engine)
-        tabcomms = controllercomms.set_page()
+        tabcomms = await controllercomms.set_page()
 
         mainInterface = MainView.get_main_tabs(tabsearch, tabcomms)
 

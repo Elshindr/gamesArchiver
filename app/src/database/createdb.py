@@ -19,7 +19,7 @@ def init_db()-> Engine:
         f"sqlite:///{db_path.as_posix()}"
     )
 
-    Base.metadata.drop_all(engine)#TODO: to delete
+    #Base.metadata.drop_all(engine)#TODO: to delete
     Base.metadata.create_all(engine)
 
     print(f"Base de données : {db_path.resolve()}")

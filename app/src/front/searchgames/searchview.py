@@ -16,7 +16,6 @@ class ViewSearch:
         "playtime": ["Playtime (h)", fdt.DataColumnSize.S, ft.Alignment.CENTER],
     }
 
-
     @classmethod
     def get_data_columns(
         cls,
@@ -42,7 +41,6 @@ class ViewSearch:
                 col=1,
             ),
         ]
-
 
     @classmethod
     def get_data_cells(
@@ -97,7 +95,7 @@ class ViewSearch:
                         ),
                         ft.IconButton(
                             icon=ft.Icons.ADD_CIRCLE,
-                            tooltip="Ajouter à la base de données",
+                            tooltip="Ajouter à ma bibliotheque",
                             on_click=handle_add_game,
                         ),
                     ],
@@ -108,15 +106,9 @@ class ViewSearch:
 
         return cells
 
-
     @classmethod
     def get_data_rows(
-        cls,
-        games,
-        selected_game,
-        on_select,
-        on_open_panel,
-        on_add_game
+        cls, games, selected_game, on_select, on_open_panel, on_add_game
     ) -> list[fdt.DataRow2]:
         """Genere les lignes pour chaque colonnes et appelle la generation des cellules"""
         rows = []
@@ -136,16 +128,11 @@ class ViewSearch:
                         ft.ControlState.SELECTED: ft.Colors.ON_PRIMARY,
                     },
                     on_tap=lambda _, g=g: on_select(g),
-                    cells=cls.get_data_cells(
-                        g,
-                        on_open_panel,
-                        on_add_game
-                    ),
+                    cells=cls.get_data_cells(g, on_open_panel, on_add_game),
                 )
             )
 
         return rows
-
 
     @staticmethod
     def get_search_table() -> fdt.DataTable2:
@@ -167,22 +154,21 @@ class ViewSearch:
             ),
         )
 
-
     #### BAR SEARCH
     @staticmethod
     def get_search_bar(
         query: str,
         platforms: dict,
-        text_platforms:ft.Text,
+        text_platforms: ft.Text,
         on_query_change: Callable[[str], None],
         on_search: Callable[[], object],
-        on_toggle_platform
+        on_toggle_platform,
     ):
 
         search_button = ft.FilledButton(
             None,
             icon=ft.Icons.SEARCH,
-             style=ft.ButtonStyle(shape=ft.CircleBorder(), padding=10)
+            style=ft.ButtonStyle(shape=ft.CircleBorder(), padding=10),
         )
 
         menu_items = []
@@ -194,16 +180,11 @@ class ViewSearch:
                 on_change=lambda e, p=plt: on_toggle_platform(p, e.control.value),
             )
 
-            menu_items.append(
-                ft.PopupMenuItem(
-                    content=checkbox
-                )
-            )
-        
-        
-        text_platforms.color=ft.Colors.BLUE_GREY_200
-        text_platforms.size=16
-        text_platforms.margin=ft.Margin.only(left=9)
+            menu_items.append(ft.PopupMenuItem(content=checkbox))
+
+        text_platforms.color = ft.Colors.BLUE_GREY_200
+        text_platforms.size = 16
+        text_platforms.margin = ft.Margin.only(left=9)
 
         combo = ft.PopupMenuButton(
             content=ft.Container(
@@ -221,10 +202,10 @@ class ViewSearch:
                 border=ft.Border.all(1, ft.Colors.OUTLINE),
                 border_radius=5,
                 expand=True,
-                width=450
+                width=450,
             ),
             items=menu_items,
-            width=500
+            width=500,
         )
 
         progress = ft.ProgressRing(
@@ -253,9 +234,9 @@ class ViewSearch:
                 ),
                 combo,
                 search_button,
-                progress
+                progress,
             ],
-            spacing=10
+            spacing=10,
         )
 
         return bar, search_button, progress
@@ -268,17 +249,15 @@ class ViewSearch:
     ) -> ft.Container:
         """Assemble la vue complète à partir de composants déjà construits."""
         return ft.Container(
-            content=
-                ft.SafeArea(
+            content=ft.SafeArea(
+                expand=True,
+                content=ft.Column(
                     expand=True,
-                    content=ft.Column(
-                        expand=True,
-                        controls=[
-                            search_bar,
-                            tables,
-                        ],
-                        spacing=10,
-                    ),
-                )
-            ,
+                    controls=[
+                        search_bar,
+                        tables,
+                    ],
+                    spacing=10,
+                ),
+            ),
         )

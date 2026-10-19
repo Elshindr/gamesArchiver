@@ -5,14 +5,21 @@ from .services import GameRawgService
 from .searchview import ViewSearch
 from .detailpanelview import ViewSidePanelDetailGame
 import asyncio
+from collections.abc import Awaitable, Callable
 from back.ingestion import Ingestion
 
 
 class SearchController:
 
-    def __init__(self, page: ft.Page, engine):
+    def __init__(
+        self,
+        page: ft.Page,
+        engine,
+        on_game_added: Callable[[], Awaitable[None]] | None = None,
+    ):
         self.page = page
         self.engine = engine
+        self.on_game_added = on_game_added
 
         # État
         self.query = ""
@@ -83,7 +90,6 @@ class SearchController:
         return ViewSearch.build_search_page(tables, search_bar)
 
     #### DROPDOWN PLATFORMS
-
     def update_text_platforms(self):
         if self.selected_platforms_ids:
             self.text_platforms.value = ", ".join(sorted(self.selected_platforms_ids))
@@ -182,12 +188,14 @@ class SearchController:
 
     ### ACTION BTN
     async def on_add_game(self, game: GameRawg):
-        isInBase = await asyncio.to_thread(
-        Ingestion.insert_game_rawg,
-        game,
-        self.platforms,
-        self.engine,
-    )
+        await asyncio.to_thread(
+            Ingestion.insert_game_rawg,
+            game,
+            self.platforms,
+            self.engine,
+        )
+        if self.on_game_added is not None:
+            await self.on_game_added()
         self.page.update()
 
     ### GENERALS
@@ -202,7 +210,7 @@ class SearchController:
             self.selected_game,
             self.handle_select,
             on_open_panel=self.open_game_panel,
-            on_add_game= self.on_add_game,
+            on_add_game=self.on_add_game,
         )
 
         self.table.sort_column_index = self.sort_column_index
