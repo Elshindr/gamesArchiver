@@ -1,42 +1,47 @@
 import flet as ft
 from models.games import GameRawg
-from back.searchsrawg import RAWGAPI
+from back.apirawg import RAWGAPI
 from .services import GameRawgService
 from .searchview import ViewSearch
 from .detailpanelview import ViewSidePanelDetailGame
 import asyncio
 from collections.abc import Awaitable, Callable
 from back.ingestion import Ingestion
-
+from database.orm import Platform
+from typing import List
+from sqlalchemy import Engine
+import flet_datatable2 as fdt
 
 class SearchController:
 
     def __init__(
         self,
+        main,
         page: ft.Page,
-        engine,
+        engine:Engine,
+        lstplatforms:List[Platform],
         on_game_added: Callable[[], Awaitable[None]] | None = None,
     ):
+        self.main = main
         self.page = page
         self.engine = engine
         self.on_game_added = on_game_added
 
         # État
         self.query = ""
-        self.games: list[GameRawg] = []
         self.selected_game: GameRawg | None = None
-        self.selected_platforms_ids: set[str] = set()
+        self.selected_platforms: List[Platform] = []
 
         self.sort_column_index = 0
         self.sort_ascending = True
 
         # Données
-        self.platforms: dict = {}
+        self.lstplatforms:List[Platform] = lstplatforms
 
         # Contrôles Flet
         self.search_button: ft.FilledButton | None = None
         self.progress: ft.ProgressRing | None = None
-        self.table = None
+        self.table:fdt.DataTable2 = None
 
         self.text_platforms = ft.Text("Aucune plateforme sélectionnée")
 
@@ -58,24 +63,24 @@ class SearchController:
             ),
         )
 
-    #### INIT PAGE
-    async def initialize(self):
-        """Initialise les données nécessaires au controller."""
-
-        self.platforms = await asyncio.to_thread(RAWGAPI.get_platforms)
+    @property
+    def games(self) -> list[GameRawg]:
+        return self.main.lstsearchs
+    
+    #### INIT TAB SEARCH
 
     def set_page(self):
 
         search_bar, self.search_button, self.progress = ViewSearch.get_search_bar(
             self.query,
-            self.platforms,
+            self.lstplatforms,
             self.text_platforms,
             on_query_change=self.handle_query_change,
             on_search=self.handle_search,
             on_toggle_platform=self.toggle_platform,
         )
 
-        self.table = ViewSearch.get_search_table()
+        self.table = ViewSearch.get_search_table(handle_sort=self.handle_sort)
 
         tables = ft.Stack(
             expand=True,
@@ -91,19 +96,24 @@ class SearchController:
 
     #### DROPDOWN PLATFORMS
     def update_text_platforms(self):
-        if self.selected_platforms_ids:
-            self.text_platforms.value = ", ".join(sorted(self.selected_platforms_ids))
+        """Met à jour le texte des platformes selectionnées"""
+
+        if self.selected_platforms:
+            self.text_platforms.value = ", ".join(sorted([plt.name for plt in self.selected_platforms]))
         else:
             self.text_platforms.value = "Aucune plateforme sélectionnée"
         self.page.update()
 
-    def toggle_platform(self, platform, checked):
+    def toggle_platform(self, platform:Platform, checked:bool):
+        """Event lors du cochage/decochage d'une checkbox du dropdown des platformes"""
+
         if checked:
-            self.selected_platforms_ids.add(platform)
+            self.selected_platforms.append(platform)
         else:
-            self.selected_platforms_ids.discard(platform)
+            self.selected_platforms.remove(platform)
 
         self.update_text_platforms()
+
 
     # PANEL DETAIL GAME
     def close_game_panel(self, e: ft.ControlEvent):
@@ -115,11 +125,13 @@ class SearchController:
         self.paneldetail.content = ViewSidePanelDetailGame.get_paneldetail(
             game=game,
             fermer_panel=self.close_game_panel,
+            on_add_game=self.on_add_game
         )
 
         self.paneldetail.right = 0
 
         self.page.update()
+
 
     # RECHERCHE BAR GAMES RAWG
     def handle_query_change(self, new_query: str):
@@ -127,46 +139,49 @@ class SearchController:
 
     async def handle_search(self, e=None):
 
-        if self.search_button.disabled:
+        if self.search_button.disabled: #bloque les nouvelles recherches
             return
 
-        query = self.query.strip()
+        query = self.query.strip()#nettoie la chaine
 
         if not query:
-            self.games = []
+            self.main.lstsearchs = []
             self.refresh()
             return
 
+        # Gestion de l'affichage des boutons
         self.search_button.disabled = True
         self.progress.visible = True
-
         self.page.update()
 
-        plt_ids = [self.platforms.get(name) for name in self.selected_platforms_ids]
+
+        plt_ids = [plt.idRawg for plt in self.selected_platforms] # IdRawg des platforms selectionnées 
 
         try:
-            self.games = await asyncio.to_thread(RAWGAPI.search_games, query, plt_ids)
-
-            self.games = self.games or []
+            self.main.lstsearchs = await self.main.get_lstsearchs_rawg(query, plt_ids)
+            print("assign ok")
+            #self.games = self.games or []
 
             GameRawgService.sort(
                 self.games,
                 self.sort_column_index,
                 self.sort_ascending,
             )
-
+            print("sort ok")
             self.refresh()
+            print("refresh ok")
 
-        except Exception as exc:
-            print(f"Erreur pendant la recherche RAWG : {exc}")
+        except Exception as e:
+            print(f"Erreur pendant la recherche RAWG : {e}")
 
         finally:
             self.search_button.disabled = False
-            self.search_button.text = "Rechercher"
             self.progress.visible = False
 
             self.page.update()
 
+
+    # TABLE GAMES_SEARCH EVENTs
     def handle_sort(self, e: ft.DataColumnSortEvent):
 
         self.sort_column_index = e.column_index
@@ -188,22 +203,18 @@ class SearchController:
 
     ### ACTION BTN
     async def on_add_game(self, game: GameRawg):
-        await asyncio.to_thread(
-            Ingestion.insert_game_rawg,
-            game,
-            self.platforms,
-            self.engine,
-        )
+        self.main.add_game_tab_search(game)
+
+
         if self.on_game_added is not None:
             await self.on_game_added()
+
         self.page.update()
+
+
 
     ### GENERALS
     def fill(self):
-
-        self.table.columns = ViewSearch.get_data_columns(
-            on_sort=self.handle_sort,
-        )
 
         self.table.rows = ViewSearch.get_data_rows(
             self.games,

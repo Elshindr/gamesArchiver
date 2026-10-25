@@ -2,6 +2,7 @@ import flet as ft
 from typing import Callable, List
 import flet_datatable2 as fdt
 from models.games import GameRawg
+from database.orm import Platform
 
 
 class ViewSearch:
@@ -56,8 +57,10 @@ class ViewSearch:
 
             raw = getattr(game, attr, None)
 
-            if attr in ("platforms", "genres", "tags"):
+            if attr in ( "genres", "tags"):
                 value = ", ".join(raw) if raw else ""
+            elif attr == "platforms":
+                value = ", ".join([plt.name for plt in game.platforms ]) 
             else:
                 value = raw if raw is not None else ""
 
@@ -69,12 +72,6 @@ class ViewSearch:
                             tooltip=str(value),
                         ),
                         alignment=cls.COLUMNS.get(attr)[2],
-                        # border=ft.Border(
-                        #    right=ft.BorderSide(
-                        #        width=0.5,
-                        #       color=ft.Colors.OUTLINE_VARIANT,
-                        #   )
-                        # ),
                         expand=True,
                     )
                 )
@@ -135,7 +132,7 @@ class ViewSearch:
         return rows
 
     @staticmethod
-    def get_search_table() -> fdt.DataTable2:
+    def get_search_table(handle_sort) -> fdt.DataTable2:
         """Retourne le composant de tableau de jeux trouvés."""
         return fdt.DataTable2(
             expand=True,
@@ -152,13 +149,16 @@ class ViewSearch:
                 ),
                 alignment=ft.Alignment.CENTER,
             ),
+            columns=ViewSearch.get_data_columns(
+                on_sort=handle_sort,
+            ),
         )
 
     #### BAR SEARCH
     @staticmethod
     def get_search_bar(
         query: str,
-        platforms: dict,
+        platforms: List[Platform],
         text_platforms: ft.Text,
         on_query_change: Callable[[str], None],
         on_search: Callable[[], object],
@@ -172,9 +172,9 @@ class ViewSearch:
         )
 
         menu_items = []
-        for plt, ids in platforms.items():
+        for plt in platforms:
             checkbox = ft.Checkbox(
-                label=plt,
+                label=plt.name,
                 expand=True,
                 value=False,
                 on_change=lambda e, p=plt: on_toggle_platform(p, e.control.value),
@@ -230,7 +230,7 @@ class ViewSearch:
                     hint_text="Nom du jeu …",
                     on_change=lambda e: on_query_change(e.control.value or ""),
                     on_submit=handle_input_submit,
-                    prefix_icon=ft.Icons.ABC_ROUNDED,  # ft.Icons.GAMEPAD_ROUNDED,
+                    prefix_icon=ft.Icons.ABC_ROUNDED,
                 ),
                 combo,
                 search_button,

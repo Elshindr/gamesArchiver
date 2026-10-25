@@ -1,24 +1,17 @@
-
 from models.games import GameRawg
+
 
 class GameRawgService:
     SORTERS = {
-        0: lambda g: (
-            g.name.casefold() if g.name else None
-        ),
+        0: lambda g: (g.name.casefold() if g.name else None),
         1: lambda g: g.released or None,
         2: lambda g: (
-            ", ".join(g.platforms or []).casefold()
-            if g.platforms else None
+            ", ".join([plt.name for plt in g.platforms] or []).casefold()
+            if g.platforms
+            else None
         ),
-        3: lambda g: (
-            ", ".join(g.genres or []).casefold()
-            if g.genres else None
-        ),
-        4: lambda g: (
-            ", ".join(g.tags or []).casefold()
-            if g.tags else None
-        ),
+        3: lambda g: (", ".join(g.genres or []).casefold() if g.genres else None),
+        4: lambda g: (", ".join(g.tags or []).casefold() if g.tags else None),
         5: lambda g: g.playtime if g.playtime is not None else None,
     }
 
@@ -32,15 +25,9 @@ class GameRawgService:
         key_func = GameRawgService.SORTERS[column_index]
 
         # Séparation: valeur existe / valeur None
-        with_value = [
-            game for game in games
-            if key_func(game) is not None
-        ]
+        with_value = [game for game in games if key_func(game) is not None]
 
-        without_value = [
-            game for game in games
-            if key_func(game) is None
-        ]
+        without_value = [game for game in games if key_func(game) is None]
 
         # Trier uniquement les valeurs comparables
         with_value.sort(

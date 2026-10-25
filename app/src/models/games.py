@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-
+@dataclass
+class PlatformRawg:
+    idRawg:int
+    name:str
 
 @dataclass
 class GameRawg:
     id:int
     name: str
     released: datetime
-    platforms: list[str]
+    platforms: list[PlatformRawg]
     genres: list[str]
     slug: str
     background_image: str

@@ -7,7 +7,8 @@ async def main(page: ft.Page):
 
     # INIT TABS
     controllermain = MainController(page)
-    await controllermain.set_page()
+    await controllermain.initialize()
+    controllermain.set_page()
 
 
 ft.run(main)
