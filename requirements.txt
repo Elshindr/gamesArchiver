@@ -1,7 +1,8 @@
 python-dotenv
 pandas
 requests
-howlongtobeatpy
 flet[all]
 flet-datatable2
 sqlalchemy
+howlongtobeatpy
+wikipedia-api
