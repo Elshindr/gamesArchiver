@@ -1,13 +1,13 @@
 import flet as ft
 from typing import Callable
-from models.games import GameRawg
-
+#from models.games import GameRawg
+from database.orm import Game
 
 class ViewSidePanelDetailGame:
 
     @staticmethod
     def get_paneldetail(
-        game: GameRawg,
+        game: Game,
         fermer_panel: Callable[[ft.ControlEvent], None],
         on_add_game: Callable[[ft.ControlEvent], None],
     ) -> ft.Control:
@@ -20,8 +20,8 @@ class ViewSidePanelDetailGame:
         genres = game.genres or []
         tags = game.tags or []
 
-        released = str(game.released) if game.released else "Non renseignée"
-        playtime = f"{game.playtime} h" if game.playtime else "Non renseigné"
+        released = str(game.release) if game.release else "Non renseignée"
+        playtime = f"{game.playtimeHltb} h" if game.playtimeHltb else "Non renseigné"
 
         # Header
         header = ft.Row(
@@ -74,9 +74,9 @@ class ViewSidePanelDetailGame:
         # Image
         image = ft.Container(
             content=ft.Image(
-                src=game.background_image or "",
-                width=float("inf"),
-                height=250,
+                src=game.imageUrl or None,
+                width=350,
+                #height=float("inf"),
                 fit=ft.BoxFit.COVER,
                 border_radius=ft.BorderRadius.all(12),
                 placeholder_src="Non renseignée",

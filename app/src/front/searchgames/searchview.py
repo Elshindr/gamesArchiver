@@ -1,8 +1,8 @@
 import flet as ft
 from typing import Callable, List
 import flet_datatable2 as fdt
-from models.games import GameRawg
-from database.orm import Platform
+#from models.games import GameRawg
+from database.orm import Platform, Game
 
 
 class ViewSearch:
@@ -14,7 +14,7 @@ class ViewSearch:
         "platforms": ["Platforms", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
         "genres": ["Genres", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
         "tags": ["Tags", fdt.DataColumnSize.L, ft.Alignment.CENTER_LEFT],
-        "playtime": ["Playtime (h)", fdt.DataColumnSize.S, ft.Alignment.CENTER],
+        #"playtime": ["Playtime (h)", fdt.DataColumnSize.S, ft.Alignment.CENTER],
     }
 
     @classmethod
@@ -46,9 +46,9 @@ class ViewSearch:
     @classmethod
     def get_data_cells(
         cls,
-        game: GameRawg,
-        on_open_panel: Callable[[GameRawg], None],
-        on_add_game: Callable[[GameRawg], None],
+        game: Game,
+        on_open_panel: Callable[[Game], None],
+        on_add_game: Callable[[Game], None],
     ) -> list[ft.DataCell]:
         """Genere les cellules pour chaque colonne et ligne"""
         cells = []
@@ -79,6 +79,8 @@ class ViewSearch:
 
         async def handle_add_game(e: ft.ControlEvent):
             await on_add_game(game)
+        async def handle_open_panel(e: ft.ControlEvent):
+            await on_open_panel(game)
 
         # cellule Actions
         cells.append(
@@ -88,7 +90,7 @@ class ViewSearch:
                         ft.IconButton(
                             icon=ft.Icons.REMOVE_RED_EYE,
                             tooltip="Voir les détails",
-                            on_click=lambda e, g=game: on_open_panel(g),
+                            on_click=handle_open_panel,
                         ),
                         ft.IconButton(
                             icon=ft.Icons.ADD_CIRCLE,

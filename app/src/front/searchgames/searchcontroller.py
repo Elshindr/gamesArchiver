@@ -1,6 +1,7 @@
 import flet as ft
-from models.games import GameRawg
-from back.apirawg import RAWGAPI
+#from models.games import GameRawg
+from database.orm import Game, Platform
+
 from .services import GameRawgService
 from .searchview import ViewSearch
 from .detailpanelview import ViewSidePanelDetailGame
@@ -11,6 +12,8 @@ from database.orm import Platform
 from typing import List
 from sqlalchemy import Engine
 import flet_datatable2 as fdt
+from back.apihltb import get_howlongtobeat
+
 
 class SearchController:
 
@@ -18,8 +21,8 @@ class SearchController:
         self,
         main,
         page: ft.Page,
-        engine:Engine,
-        lstplatforms:List[Platform],
+        engine: Engine,
+        lstplatforms: List[Platform],
         on_game_added: Callable[[], Awaitable[None]] | None = None,
     ):
         self.main = main
@@ -29,19 +32,19 @@ class SearchController:
 
         # État
         self.query = ""
-        self.selected_game: GameRawg | None = None
+        self.selected_game: Game | None = None
         self.selected_platforms: List[Platform] = []
 
         self.sort_column_index = 0
         self.sort_ascending = True
 
         # Données
-        self.lstplatforms:List[Platform] = lstplatforms
+        self.lstplatforms: List[Platform] = lstplatforms
 
         # Contrôles Flet
         self.search_button: ft.FilledButton | None = None
         self.progress: ft.ProgressRing | None = None
-        self.table:fdt.DataTable2 = None
+        self.table: fdt.DataTable2 = None
 
         self.text_platforms = ft.Text("Aucune plateforme sélectionnée")
 
@@ -64,9 +67,9 @@ class SearchController:
         )
 
     @property
-    def games(self) -> list[GameRawg]:
+    def games(self) -> list[Game]:
         return self.main.lstsearchs
-    
+
     #### INIT TAB SEARCH
 
     def set_page(self):
@@ -99,12 +102,14 @@ class SearchController:
         """Met à jour le texte des platformes selectionnées"""
 
         if self.selected_platforms:
-            self.text_platforms.value = ", ".join(sorted([plt.name for plt in self.selected_platforms]))
+            self.text_platforms.value = ", ".join(
+                sorted([plt.name for plt in self.selected_platforms])
+            )
         else:
             self.text_platforms.value = "Aucune plateforme sélectionnée"
         self.page.update()
 
-    def toggle_platform(self, platform:Platform, checked:bool):
+    def toggle_platform(self, platform: Platform, checked: bool):
         """Event lors du cochage/decochage d'une checkbox du dropdown des platformes"""
 
         if checked:
@@ -114,24 +119,41 @@ class SearchController:
 
         self.update_text_platforms()
 
-
     # PANEL DETAIL GAME
     def close_game_panel(self, e: ft.ControlEvent):
         self.paneldetail.right = -400
         self.page.update()
 
-    def open_game_panel(self, game: GameRawg):
+    async def open_game_panel(self, game: Game):
+        self.paneldetail.content = ft.Column(
+            [
+                ft.Text(game.name, size=24, weight=ft.FontWeight.BOLD),
+                ft.ProgressRing(),
+                ft.Text("Recherche …"),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+        self.paneldetail.right = 0
+        self.page.update()
+
+        if game.playtimeHltb is None and game.imageUrl is None:
+            try:
+                playtime, img = await asyncio.to_thread(
+                    get_howlongtobeat, game.idHltb, game.name
+                )
+                game.playtimeHltb = playtime
+                if img:
+                    game.imageUrl = img
+            except Exception as exc:
+                # TODO:À remplacer idéalement par un message visible dans le panneau.
+                print(f"Erreur pendant la recherche HowLongToBeat : {exc}")
 
         self.paneldetail.content = ViewSidePanelDetailGame.get_paneldetail(
             game=game,
             fermer_panel=self.close_game_panel,
-            on_add_game=self.on_add_game
+            on_add_game=self.on_add_game,
         )
-
-        self.paneldetail.right = 0
-
         self.page.update()
-
 
     # RECHERCHE BAR GAMES RAWG
     def handle_query_change(self, new_query: str):
@@ -139,10 +161,10 @@ class SearchController:
 
     async def handle_search(self, e=None):
 
-        if self.search_button.disabled: #bloque les nouvelles recherches
+        if self.search_button.disabled:  # bloque les nouvelles recherches
             return
 
-        query = self.query.strip()#nettoie la chaine
+        query = self.query.strip()  # nettoie la chaine
 
         if not query:
             self.main.lstsearchs = []
@@ -154,13 +176,14 @@ class SearchController:
         self.progress.visible = True
         self.page.update()
 
-
-        plt_ids = [plt.idRawg for plt in self.selected_platforms] # IdRawg des platforms selectionnées 
+        plt_ids = [
+            plt.idRawg for plt in self.selected_platforms
+        ]  # IdRawg des platforms selectionnées
 
         try:
             self.main.lstsearchs = await self.main.get_lstsearchs_rawg(query, plt_ids)
             print("assign ok")
-            #self.games = self.games or []
+            # self.games = self.games or []
 
             GameRawgService.sort(
                 self.games,
@@ -180,7 +203,6 @@ class SearchController:
 
             self.page.update()
 
-
     # TABLE GAMES_SEARCH EVENTs
     def handle_sort(self, e: ft.DataColumnSortEvent):
 
@@ -195,23 +217,20 @@ class SearchController:
 
         self.refresh()
 
-    def handle_select(self, g: GameRawg):
+    def handle_select(self, g: Game):
         self.selected_game = (
             None if self.selected_game is g else g
         )  # re-clic = désélection
         self.refresh()
 
     ### ACTION BTN
-    async def on_add_game(self, game: GameRawg):
+    async def on_add_game(self, game: Game):
         self.main.add_game_tab_search(game)
-
 
         if self.on_game_added is not None:
             await self.on_game_added()
 
         self.page.update()
-
-
 
     ### GENERALS
     def fill(self):

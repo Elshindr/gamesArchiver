@@ -18,8 +18,11 @@ class Platform(Base):
     __tablename__ = "platform"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    idRawg: Mapped[int] = mapped_column(Integer, nullable=False)
+    idRawg: Mapped[int] = mapped_column(Integer, nullable=True)
+    idWiki: Mapped[int] = mapped_column(String(255), nullable=True)
+    
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+  
 
     games: Mapped[list["Game"]] = relationship(
         secondary="game_platforms", back_populates="platforms"
@@ -31,13 +34,20 @@ class Game(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     idRawg: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    idHltb: Mapped[int] = mapped_column(Integer, nullable=True)
+    idWiki: Mapped[int] = mapped_column(String(255), nullable=True)
+    
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    playtimeRAWG: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    playtimeHltb:Mapped[int] = mapped_column(String(255), nullable=True)    
+    
     developers: Mapped[str | None] = mapped_column(String(255), nullable=True)
     publishers: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    composers:Mapped[str | None] = mapped_column(String(255), nullable=True)
+   
     tags: Mapped[str | None] = mapped_column(String(255), nullable=True)
     genres: Mapped[str | None] = mapped_column(String(255), nullable=True)
     release: Mapped[Date | None] = mapped_column(Date, nullable=True)
+    
     imageUrl: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     platforms: Mapped[list["Platform"]] = relationship(
