@@ -1,6 +1,7 @@
 # Besoins
 - Liste des jv depuis plusieurs datasources
-    - Rawg
+    - Wikidata
+    - Howlontobeat
 - Possibilité d'en archiver dans une base locale :
     - note perso
     - commentaire
@@ -9,12 +10,14 @@
 - Interface de récupération des données de jv depuis une image par OCR:
     - nom
     - plateforme
-    - (dev?, editeur?)
 
 
 # Data sources
-- [Rawg](https://rawg.io/apidocs)
-- [Thegamesdb](https://api.thegamesdb.net/)
+- [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page)
+- [HowLongTobeat](https://github.com/ScrappyCocco/HowLongToBeat-PythonAPI)
+
+- [Rawg](https://rawg.io/apidocs)?
+- [Thegamesdb](https://api.thegamesdb.net/) ?
 
 
  => [Build In Flet](https://flet.dev/)
